@@ -1,0 +1,1 @@
+- [ARC Terminal API routing](arc-terminal-api-routing.md) — preserve the dedicated `/api/healthz` route so ARC's Vite middleware can handle its other API endpoints.

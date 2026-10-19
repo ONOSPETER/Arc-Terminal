@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "ARC Terminal"
+description = "An on-chain research and forecasting terminal that shows Ethereum network signals, forecasts, memory-backed learning, and a clearly labeled demo mode."
+version = "1.0.0"
+id = "artifacts/arc-terminal"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25647
+
+[services.development]
+run = "pnpm --filter @workspace/arc-terminal run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/arc-terminal", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/arc-terminal/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25647"
+BASE_PATH = "/"
