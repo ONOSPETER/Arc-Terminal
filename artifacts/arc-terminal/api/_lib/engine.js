@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { CHAINS, METRICS, HORIZONS_MIN } from '../../shared/chains.js';
+import { CHAINS, FORECAST_CHAINS, METRICS, HORIZONS_MIN } from '../../shared/chains.js';
 import { adjustProbability, brier, calibrationStats, lessonFromStats, outcomeOf, round } from '../../shared/scoring.js';
 import { systemPrompt, userPrompt, validateForecasts } from '../../shared/prompt.js';
 import { chatJSON } from './llm.js';
@@ -9,6 +9,14 @@ import { HttpError } from './http.js';
 export const pickChain = (c) => {
   if (!CHAINS[c]) throw new HttpError(400, `Unknown chain "${c}". Use one of: ${Object.keys(CHAINS).join(', ')}`);
   return c;
+};
+
+export const pickForecastChain = (c) => {
+  const chain = pickChain(c);
+  if (!FORECAST_CHAINS.includes(chain)) {
+    throw new HttpError(400, 'Forecasts currently support Ethereum and Base. Sui and Solana are available for live network monitoring.');
+  }
+  return chain;
 };
 
 /** Split recalled Walrus cards into lessons, calibration stats and display refs. */
@@ -49,7 +57,7 @@ export async function runPolicy({ policy, chain, signals, count, memory, asOfTs 
 
 /** Never trust forecast objects coming back from the browser. */
 export function sanitizeForecast(f) {
-  const chain = pickChain(f?.chain);
+  const chain = pickForecastChain(f?.chain);
   if (!METRICS[f.metric] || !['above', 'below'].includes(f.comparator)) throw new HttpError(400, 'Invalid forecast object');
   const nums = ['threshold', 'p', 'deadline', 'createdAtTs'].map((k) => Number(f[k]));
   if (nums.some((n) => !Number.isFinite(n)) || !HORIZONS_MIN.includes(Number(f.horizonMin))) throw new HttpError(400, 'Invalid forecast numbers');

@@ -4,7 +4,7 @@ import { setToken } from './lib/api.js';
 import { Logo } from './components/Logo.jsx';
 import { Icon, Spinner } from './components/ui.jsx';
 import { CHAINS } from '../shared/chains.js';
-import Overview from './views/Overview.jsx';
+import Dashboard from './views/Dashboard.jsx';
 import Forecasts from './views/Forecasts.jsx';
 import Signals from './views/Signals.jsx';
 import MemoryExplorer from './views/MemoryExplorer.jsx';
@@ -14,9 +14,9 @@ import Settings from './views/Settings.jsx';
 import QuickStart from './views/QuickStart.jsx';
 
 const ROUTES = [
-  { group: 'Monitoring', items: [['overview', 'Overview', 'grid', Overview], ['forecasts', 'Forecasts', 'target', Forecasts], ['signals', 'Signals', 'pulse', Signals], ['memory', 'Memory explorer', 'db', MemoryExplorer]] },
-  { group: 'Evaluation', items: [['learning', 'Learning and replay', 'chart', Learning], ['audit', 'Audit trail', 'book', AuditTrail]] },
-  { group: 'Management', items: [['settings', 'Settings', 'gear', Settings], ['quickstart', 'Quick start', 'play', QuickStart]] },
+  { group: 'Monitor', items: [['overview', 'Network dashboard', 'grid', Dashboard], ['signals', 'Network data', 'pulse', Signals]] },
+  { group: 'Research', items: [['forecasts', 'Forecasts', 'target', Forecasts], ['learning', 'Learning', 'chart', Learning], ['audit', 'Audit trail', 'book', AuditTrail]] },
+  { group: 'Data and settings', items: [['memory', 'Memory explorer', 'db', MemoryExplorer], ['settings', 'Settings', 'gear', Settings], ['quickstart', 'Setup guide', 'play', QuickStart]] },
 ];
 const FLAT = ROUTES.flatMap((g) => g.items);
 const current = () => (window.location.hash.replace('#/', '') || 'overview');
@@ -31,6 +31,17 @@ function Shell() {
   const entry = FLAT.find((x) => x[0] === route) || FLAT[0];
   const View = entry[3];
   const demo = s.settings.demo;
+  const forecastSupported = CHAINS[s.settings.chain]?.kind === 'evm';
+  const selectedNetwork = s.networks?.[s.settings.chain];
+  const liveLabel = demo
+    ? 'DEMO · sample data'
+    : selectedNetwork?.ok
+      ? 'LIVE · connected'
+      : selectedNetwork?.error?.includes('TATUM_API_KEY')
+        ? 'LIVE · key needed'
+        : selectedNetwork
+          ? 'LIVE · RPC offline'
+          : 'LIVE · connecting';
 
   return (
     <div className="app">
@@ -47,10 +58,15 @@ function Shell() {
       <div className="main">
         <header className="topbar">
           <h1>{entry[1]}</h1>
-          <span className={`pill ${demo ? 'demo' : 'live'}`}>{demo ? 'DEMO · sample data' : 'LIVE'}</span>
+          <span className={`pill ${demo ? 'demo' : 'live'}`}>{liveLabel}</span>
           <select className="select" value={s.settings.chain} onChange={(e) => setSetting('chain', e.target.value)} aria-label="Chain">{Object.entries(CHAINS).map(([k, c]) => <option key={k} value={k}>{c.label}</option>)}</select>
-          <button className="btn" onClick={resolveDue} disabled={busy.resolve}>{busy.resolve ? <Spinner /> : null} Resolve due{due.length ? ` (${due.length})` : ''}</button>
-          <button className="btn primary" onClick={runForecast} disabled={busy.forecast}>{busy.forecast ? <Spinner /> : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4l14 8-14 8z" fill="currentColor" stroke="none" /></svg>} Run forecast</button>
+          {entry[0] === 'forecasts' && forecastSupported ? (
+            <>
+              <button className="btn" onClick={resolveDue} disabled={busy.resolve}>{busy.resolve ? <Spinner /> : null} Resolve due{due.length ? ` (${due.length})` : ''}</button>
+              <button className="btn primary" onClick={runForecast} disabled={busy.forecast}>{busy.forecast ? <Spinner /> : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4l14 8-14 8z" fill="currentColor" stroke="none" /></svg>} Run forecast</button>
+            </>
+          ) : null}
+          {entry[0] === 'forecasts' && !forecastSupported ? <span className="muted forecast-note">Forecasting is available on Ethereum and Base.</span> : null}
         </header>
         <main className="page">
           {demo ? <div className="banner warn"><b>Demo mode.</b> Everything here is synthetic sample data. No chain data was read, no model was called and nothing was written to Walrus.</div> : null}

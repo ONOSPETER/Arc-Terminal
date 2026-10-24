@@ -78,6 +78,7 @@
     "zod": "catalog:"
   },
   "dependencies": {
+    "@grpc/grpc-js": "^1.14.6",
     "@mysten/seal": "^1.5.0",
     "@mysten/sui": "^2.36.0"
   }

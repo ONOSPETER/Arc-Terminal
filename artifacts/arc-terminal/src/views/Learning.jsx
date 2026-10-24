@@ -10,6 +10,7 @@ const cum = (steps, key) => { const acc = []; const out = []; steps.forEach((st)
 
 export default function Learning() {
   const { s, beforeAfter, runReplay, busy, progress } = useArc();
+  const forecastSupported = CHAINS[s.settings.chain]?.kind === 'evm';
   const demo = s.settings.demo;
   const [steps, setSteps] = useState(6);
   const [count, setCount] = useState(2);
@@ -35,7 +36,8 @@ export default function Learning() {
           <label className="muted">Steps <select className="select" value={steps} onChange={(e) => setSteps(+e.target.value)}>{[3, 4, 6, 8, 10].map((n) => <option key={n}>{n}</option>)}</select></label>
           <label className="muted">Forecasts per step <select className="select" value={count} onChange={(e) => setCount(+e.target.value)}>{[1, 2, 3].map((n) => <option key={n}>{n}</option>)}</select></label>
           <label className="muted">Spacing <select className="select" value={spacing} onChange={(e) => setSpacing(+e.target.value)}>{[3, 4, 6].map((n) => <option key={n} value={n}>{n} h</option>)}</select></label>
-          <button className="btn primary" disabled={busy.replay} onClick={() => runReplay({ chain: s.settings.chain, steps, count, spacingH: spacing })}>{busy.replay ? <Spinner /> : null} Run replay on {CHAINS[s.settings.chain].label}</button>
+          <button className="btn primary" disabled={busy.replay || !forecastSupported} onClick={() => runReplay({ chain: s.settings.chain, steps, count, spacingH: spacing })}>{busy.replay ? <Spinner /> : null} Run replay on {CHAINS[s.settings.chain].label}</button>
+          {!forecastSupported ? <p className="dim" style={{ fontSize: 12, marginBottom: 0 }}>Forecast replays currently support Ethereum and Base. Sui and Solana are available for live network monitoring.</p> : null}
           {progress ? <span className="muted mono">step {progress.i + 1} / {progress.steps}</span> : null}
           {r ? <button className="btn" onClick={exportJson}>Export JSON</button> : null}
         </div>

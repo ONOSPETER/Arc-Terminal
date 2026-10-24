@@ -1,12 +1,19 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from './api.js';
-import { METRICS } from '../../shared/chains.js';
+import { CHAINS, METRICS } from '../../shared/chains.js';
 import { calibrationStats, lessonFromStats, meanBrier } from '../../shared/scoring.js';
 import { demoForecasts, demoLesson, demoReplay, demoResolve, demoSignals } from '../demo/sample.js';
 
 const KEY = 'arc.v1';
-const fresh = () => ({ settings: { chain: 'ethereum', count: 3, demo: false }, forecasts: {}, resolutions: {}, lessons: [], writes: {}, signals: {}, recalled: [], replay: null, log: [], health: null, lastRun: null });
-const load = () => { try { return { ...fresh(), ...JSON.parse(localStorage.getItem(KEY) || '{}'), health: null }; } catch { return fresh(); } };
+const fresh = () => ({ settings: { chain: 'sui', count: 3, demo: false }, forecasts: {}, resolutions: {}, lessons: [], writes: {}, signals: {}, networks: {}, networkPollAt: null, recalled: [], replay: null, log: [], health: null, lastRun: null });
+const load = () => {
+  try {
+    const stored = JSON.parse(localStorage.getItem(KEY) || '{}');
+    const settings = { ...fresh().settings, ...stored.settings };
+    if (!CHAINS[settings.chain]) settings.chain = 'sui';
+    return { ...fresh(), ...stored, settings, networks: stored.networks || {}, health: null };
+  } catch { return fresh(); }
+};
 
 export const claimText = (f) => `${METRICS[f.metric]?.label || f.metric} ${f.comparator} ${f.threshold} ${METRICS[f.metric]?.unit || ''} in ${f.horizonMin}m`;
 const Ctx = createContext(null);
@@ -155,10 +162,26 @@ export function ArcProvider({ children }) {
     patch((p) => ({ signals: { ...p.signals, [chain]: { data: out.signals, at: Date.now() } } }));
   });
 
-  const refreshHealth = (probe) => guard('health', async () => {
-    const h = await api(`/api/health${probe ? '?probe=1' : ''}`);
+  const fetchNetworks = useCallback((chain = 'all') => guard('networks', async () => {
+    if (ref.current.settings.demo) return;
+    const out = await api(`/api/networks?chain=${encodeURIComponent(chain)}`);
+    patch((p) => ({ networks: { ...p.networks, ...out.networks }, networkPollAt: Date.now() }));
+  }), [guard, patch]);
+
+  const refreshHealth = useCallback((probe) => guard('health', async () => {
+    const h = await api('/api/health');
     patch(() => ({ health: h }));
-  });
+    if (probe) fetchNetworks('all');
+  }), [guard, patch, fetchNetworks]);
+
+  useEffect(() => {
+    if (s.settings.demo) return undefined;
+    fetchNetworks('all');
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible' && !busyRef.current.networks) fetchNetworks('all');
+    }, 20_000);
+    return () => clearInterval(timer);
+  }, [s.settings.demo, fetchNetworks]);
 
   const runReplay = ({ chain, steps, count, spacingH }) => guard('replay', async () => {
     const started = Date.now();
@@ -185,6 +208,6 @@ export function ArcProvider({ children }) {
 
   const reset = () => { localStorage.removeItem(KEY); setS(fresh()); toast('Local cache cleared. Walrus memories are untouched.', 'warn'); };
 
-  const value = { s, busy, toasts, needToken, setNeedToken, progress, items, resolved, open, due, liveBrier, beforeAfter, setSetting, runForecast, resolveDue, pollWrites, verifyWrite, syncWalrus, fetchSignals, refreshHealth, runReplay, reset, toast, lessonFromStats };
+  const value = { s, busy, toasts, needToken, setNeedToken, progress, items, resolved, open, due, liveBrier, beforeAfter, setSetting, runForecast, resolveDue, pollWrites, verifyWrite, syncWalrus, fetchSignals, fetchNetworks, refreshHealth, runReplay, reset, toast, lessonFromStats };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

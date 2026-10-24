@@ -1,6 +1,6 @@
 import { handler, requireEnv, HttpError, clampInt } from './_lib/http.js';
 import { makeRpc, collectSignals } from './_lib/tatum.js';
-import { pickChain, resolveOne, runPolicy, sanitizeForecast } from './_lib/engine.js';
+import { pickForecastChain, resolveOne, runPolicy, sanitizeForecast } from './_lib/engine.js';
 import { assertNoLeakage, calibrationStats, lessonFromStats } from '../shared/scoring.js';
 
 // One walk-forward step. The browser drives the loop so each call stays well inside the function time limit.
@@ -9,7 +9,7 @@ import { assertNoLeakage, calibrationStats, lessonFromStats } from '../shared/sc
 export default handler({ methods: ['POST'] }, async ({ body }) => {
   requireEnv(['TATUM_API_KEY'], 'Tatum');
   requireEnv(['OPENROUTER_API_KEY'], 'OpenRouter');
-  const chain = pickChain(body.chain || 'ethereum');
+  const chain = pickForecastChain(body.chain || 'ethereum');
   const asOf = Number(body.asOf);
   const count = clampInt(body.count, 1, 4, 3);
   const prior = Array.isArray(body.memResolutions) ? body.memResolutions.slice(-60) : [];

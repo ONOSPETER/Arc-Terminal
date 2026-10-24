@@ -1,23 +1,32 @@
 import { Panel } from '../components/ui.jsx';
 
-const VARS = [['OPENROUTER_API_KEY', 'OpenRouter key'], ['OPENROUTER_MODEL', 'Model slug, e.g. openai/gpt-4o-mini'], ['TATUM_API_KEY', 'Tatum API key'], ['MEMWAL_PRIVATE_KEY', 'Walrus Memory delegate private key'], ['MEMWAL_ACCOUNT_ID', 'Walrus Memory account id'], ['MEMWAL_SERVER_URL', 'Relayer URL (optional)'], ['MEMWAL_NAMESPACE', 'Memory namespace (optional)'], ['ARC_ACCESS_TOKEN', 'Passcode for public deployments (optional)']];
+const VARS = [
+  ['TATUM_API_KEY', 'Required · live Sui, Ethereum, Solana, and Base network data'],
+  ['OPENROUTER_API_KEY', 'Required · AI forecasts on Ethereum and Base'],
+  ['MEMWAL_PRIVATE_KEY', 'Optional · Walrus Memory writes'],
+  ['MEMWAL_ACCOUNT_ID', 'Optional · Walrus Memory account'],
+  ['OPENROUTER_MODEL', 'Optional · defaults to openai/gpt-4o-mini'],
+  ['MEMWAL_SERVER_URL', 'Optional · defaults to the Walrus Memory relayer'],
+  ['MEMWAL_NAMESPACE', 'Optional · defaults to arc-terminal'],
+  ['ARC_ACCESS_TOKEN', 'Optional · passcode protection for public deployments'],
+];
 
 export default function QuickStart() {
   return (
     <div className="grid-2">
       <Panel title="Run the learning cycle">
         <ol className="steps">
-          <li><div><b>Settings → Test connections.</b> <span className="muted">Confirm OpenRouter, Tatum and Walrus show configured.</span></div></li>
-          <li><div><b>Run forecast.</b> <span className="muted">Creates forecasts and starts Walrus writes (status pending, then stored).</span></div></li>
+          <li><div><b>Network dashboard.</b> <span className="muted">Sui is checked through Tatum gRPC. Ethereum, Solana, and Base use Tatum JSON-RPC. The view refreshes every 20 seconds.</span></div></li>
+          <li><div><b>Forecasts on Ethereum or Base.</b> <span className="muted">Creates forecasts and starts optional Walrus Memory writes.</span></div></li>
           <li><div><b>Memory → Verify.</b> <span className="muted">Check a stored blob id comes back on recall.</span></div></li>
           <li><div><b>Wait for a horizon, then Resolve due.</b> <span className="muted">Shortest horizon is 15 minutes. Outcome, error and lesson are stored.</span></div></li>
           <li><div><b>Run forecast again.</b> <span className="muted">The lesson is recalled, probabilities are calibrated, and Forecast detail shows what changed.</span></div></li>
-          <li><div><b>Learning → Run replay.</b> <span className="muted">Instant before-versus-after test on past blocks.</span></div></li>
+          <li><div><b>Learning → Run replay.</b> <span className="muted">Compare the forecast policies on past Ethereum or Base data.</span></div></li>
         </ol>
       </Panel>
       <Panel title="Environment variables (server only)">
         <table className="tbl"><tbody>{VARS.map(([k, d]) => (<tr key={k}><td className="mono" style={{ fontSize: 12 }}>{k}</td><td className="muted">{d}</td></tr>))}</tbody></table>
-        <p className="dim" style={{ fontSize: 12, marginBottom: 0 }}>Add them in Vercel → Project → Settings → Environment Variables. Never prefix with VITE_.</p>
+        <p className="dim" style={{ fontSize: 12, marginBottom: 0 }}>Add credentials through Replit Secrets. Keep server keys out of browser variables; never prefix them with VITE_.</p>
       </Panel>
     </div>
   );

@@ -1,12 +1,12 @@
 import { handler, requireEnv, clampInt } from './_lib/http.js';
 import { makeRpc, collectSignals } from './_lib/tatum.js';
 import { memoryConfigured, recallForChain, writeCard } from './_lib/memory.js';
-import { memoryContext, pickChain, runPolicy } from './_lib/engine.js';
+import { memoryContext, pickForecastChain, runPolicy } from './_lib/engine.js';
 
 export default handler({ methods: ['POST'] }, async ({ body }) => {
   requireEnv(['TATUM_API_KEY'], 'Tatum');
   requireEnv(['OPENROUTER_API_KEY'], 'OpenRouter');
-  const chain = pickChain(body.chain || 'ethereum');
+  const chain = pickForecastChain(body.chain || 'ethereum');
   const count = clampInt(body.count, 1, 5, 3);
 
   const rpc = makeRpc(chain);

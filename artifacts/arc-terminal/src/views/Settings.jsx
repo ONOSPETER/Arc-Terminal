@@ -18,7 +18,10 @@ export default function Settings() {
           <>
             <Row label="OpenRouter" ok={h.openrouter.configured}><span className="mono muted" style={{ fontSize: 12 }}>{h.openrouter.model}</span></Row>
             <Row label="Tatum" ok={h.tatum.configured} />
-            {Object.entries(h.tatum.chains).map(([k, c]) => (<div key={k} className="row between" style={{ padding: '6px 0 6px 14px', fontSize: 13 }}><span className="muted">{c.label}</span>{c.ok === null ? <Badge>not tested</Badge> : c.ok ? <Badge kind="ok">block {c.latestBlock}</Badge> : <Badge kind="bad" title={c.error}>unreachable</Badge>}</div>))}
+            {Object.entries(h.tatum.chains).map(([k, c]) => {
+              const network = s.networks?.[k];
+              return (<div key={k} className="row between" style={{ padding: '6px 0 6px 14px', fontSize: 13 }}><span className="muted">{c.label}</span>{!network ? <Badge>not tested</Badge> : network.ok ? <Badge kind="ok">{network.heightLabel || 'connected'} {network.height ?? ''}</Badge> : <Badge kind="bad" title={network.error}>unreachable</Badge>}</div>);
+            })}
             <Row label="Walrus Memory (Sui Mainnet)" ok={h.walrus.configured}><span className="mono muted" style={{ fontSize: 12 }}>ns: {h.walrus.namespace}</span>{h.walrus.relayerOk === true ? <Badge kind="ok">relayer ok</Badge> : h.walrus.relayerOk === false ? <Badge kind="bad" title={h.walrus.error}>relayer error</Badge> : null}</Row>
             <Row label="Access passcode required" ok={null}><Badge kind={h.authRequired ? 'warn' : ''}>{h.authRequired ? 'yes' : 'no'}</Badge></Row>
             <p className="dim" style={{ fontSize: 12 }}>Status never reveals secret values. Keys live only in server environment variables.</p>
